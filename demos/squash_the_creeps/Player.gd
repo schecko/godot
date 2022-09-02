@@ -1,5 +1,7 @@
 extends KinematicBody
 
+signal hit
+
 export var speed = 14
 export var gravity = 75
 export var jump_impulse = 20
@@ -26,13 +28,17 @@ func _physics_process(delta):
 		velocity.y += jump_impulse
 
 	if direction != Vector3.ZERO:
+		$AnimationPlayer.playback_speed = 4
 		direction = direction.normalized()
 		$Pivot.look_at(translation + direction, Vector3.UP)
-
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
+	else:
+		$AnimationPlayer.playback_speed = 1
+
 	velocity.y -= gravity * delta
 	velocity = move_and_slide(velocity, Vector3.UP)
+	$Pivot.rotation.x = PI / 6 * velocity.y / jump_impulse
 
 	for index in range(get_slide_count()):
 		var collision = get_slide_collision(index)
@@ -46,3 +52,10 @@ func _physics_process(delta):
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 #func _process(delta):
 #	pass
+
+func die():
+	emit_signal("hit")
+	queue_free()
+
+func _on_MobDetector_body_entered(body):
+	die()
